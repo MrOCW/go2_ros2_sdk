@@ -33,11 +33,11 @@ from launch.launch_description_sources import FrontendLaunchDescriptionSource, P
 def generate_launch_description():
 
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
-    with_rviz2 = LaunchConfiguration('rviz2', default='true')
-    with_nav2 = LaunchConfiguration('nav2', default='true')
-    with_slam = LaunchConfiguration('slam', default='true')
-    with_foxglove = LaunchConfiguration('foxglove', default='true')
-    with_joystick = LaunchConfiguration('joystick', default='true')
+    with_rviz2 = LaunchConfiguration('rviz2', default='false')
+    with_nav2 = LaunchConfiguration('nav2', default='false')
+    with_slam = LaunchConfiguration('slam', default='false')
+    with_foxglove = LaunchConfiguration('foxglove', default='false')
+    with_joystick = LaunchConfiguration('joystick', default='false')
     with_teleop = LaunchConfiguration('teleop', default='true')
 
     robot_token = os.getenv('ROBOT_TOKEN', '') # how does this work for multiple robots?

@@ -45,7 +45,7 @@ from rclpy.qos import QoSProfile, QoSHistoryPolicy, QoSReliabilityPolicy
 from rclpy.qos_overriding_options import QoSOverridingOptions
 
 from tf2_ros import TransformBroadcaster
-from geometry_msgs.msg import Twist, TransformStamped, PoseStamped
+from geometry_msgs.msg import Twist, TwistWithCovarianceStamped, TransformStamped, PoseStamped
 from go2_interfaces.msg import Go2State, IMU
 from unitree_go.msg import LowState, VoxelMapCompressed, WebRtcReq
 from sensor_msgs.msg import PointCloud2, PointField, JointState, Joy
@@ -112,6 +112,7 @@ class RobotBaseNode(Node):
         self.go2_state_pub = []
         self.go2_lidar_pub = []
         self.go2_odometry_pub = []
+        self.go2_twist_pub = []
         self.imu_pub = []
         self.img_pub = []
         self.camera_info_pub = []
@@ -130,6 +131,9 @@ class RobotBaseNode(Node):
                     qos_overriding_options=QoSOverridingOptions.with_default_policies()))
             self.go2_odometry_pub.append(
                 self.create_publisher(Odometry, 'odom', qos_profile))
+            self.go2_twist_pub.append(
+                self.create_publisher(TwistWithCovarianceStamped, 'twist', qos_profile)
+            )
             self.imu_pub.append(self.create_publisher(IMU, 'imu', qos_profile))
             if self.enable_video:
                 self.img_pub.append(
@@ -165,6 +169,8 @@ class RobotBaseNode(Node):
                         qos_overriding_options=QoSOverridingOptions.with_default_policies()))
                 self.go2_odometry_pub.append(self.create_publisher(
                     Odometry, f'robot{i}/odom', qos_profile))
+                self.go2_twist_pub.append(self.create_publisher(
+                    TwistWithCovarianceStamped, f'robot{i}/twist', qos_profile))
                 self.imu_pub.append(self.create_publisher(
                     IMU, f'robot{i}/imu', qos_profile))
                 if self.enable_video:
@@ -653,6 +659,18 @@ class RobotBaseNode(Node):
                 imu.temperature = self.robot_sport_state[str(
                     i)]["data"]["imu_state"]["temperature"]
                 self.imu_pub[i].publish(imu)
+
+                twist_msg = TwistWithCovarianceStamped()
+                twist_msg.header.stamp = self.get_clock().now().to_msg()
+                twist_msg.header.frame_id = 'odom'
+                # self.get_logger().info(f"{go2_state.velocity}")
+                twist_msg.twist.twist.linear.x = float(go2_state.velocity[0])
+                twist_msg.twist.twist.linear.y = float(go2_state.velocity[1])
+                twist_msg.twist.twist.angular.z = float(imu.gyroscope[2])
+                twist_msg.twist.covariance[0] = 0.5
+                twist_msg.twist.covariance[7] = 0.5
+                twist_msg.twist.covariance[35] = 0.5
+                self.go2_twist_pub[i].publish(twist_msg)
 
 
 async def run(conn, robot_num, node):
